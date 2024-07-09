@@ -1,0 +1,51 @@
+#cloud-config
+autoinstall:
+  version: 1
+  identity:
+    hostname: portal-admin
+    username: portal-admin
+    password: "$2b$12$TXW9d.ZO4MX.1/L01KoRQ.DMUbi0qYEB5uI6DsztNDUZzSlEASZMq"
+  locale: en_US.UTF-8
+  keyboard:
+    layout: us
+  network:
+    network:
+      version: 2
+      ethernets:
+        eth0:
+          dhcp4: false
+          addresses:
+            - 192.168.1.100/24
+          gateway4: 192.168.1.1
+          nameservers:
+            addresses:
+              - 8.8.8.8
+              - 8.8.4.4
+  ssh:
+    install-server: true
+  storage:
+    layout:
+      name: direct
+  packages:
+    - vim
+    - htop
+    - splashtop-streamer
+    - video-window
+    - qemu
+    - virt-manager
+  user-data:
+    disable_root: false
+    chpasswd:
+      expire: false
+  late-commands:
+    - 'sed -i "s/quiet splash//" /target/etc/default/grub && chroot /target update-grub'
+    - 'mkdir -p /target/etc/skel/.config/autostart'
+    - 'echo -e "[Desktop Entry]\nType=Application\nExec=gsettings set org.gnome.desktop.background picture-uri none\nX-GNOME-Autostart-enabled=true" > /target/etc/skel/.config/autostart/set-black-background.desktop'
+    # Add custom resolutions for all potential display ports
+    - 'echo -e "xrandr --newmode \"512x512_60.00\"  22.50  512 528 576 640  512 515 525 537  -HSync +Vsync\nxrandr --newmode \"1024x1024_60.00\"  90.00  1024 1072 1176 1328  1024 1027 1037 1054  -HSync +Vsync\nxrandr --addmode HDMI-1 512x512\nxrandr --addmode HDMI-1 1024x1024\nxrandr --addmode HDMI-2 512x512\nxrandr --addmode HDMI-2 1024x1024\nxrandr --addmode DP-1 512x512\nxrandr --addmode DP-1 1024x1024\nxrandr --addmode DP-2 512x512\nxrandr --addmode DP-2 1024x1024\nxrandr --addmode DisplayPort-1 512x512\nxrandr --addmode DisplayPort-1 1024x1024\nxrandr --addmode DisplayPort-2 512x512\nxrandr --addmode DisplayPort-2 1024x1024" > /target/etc/skel/.config/autostart/set-resolutions.desktop'
+    - 'cp /autoinstall/start_videowindow.sh /target/usr/local/bin/start_videowindow.sh'
+    - 'chmod +x /target/usr/local/bin/start_videowindow.sh'
+    - 'echo -e "[Desktop Entry]\nType=Application\nExec=/usr/local/bin/start_videowindow.sh\nX-GNOME-Autostart-enabled=true" > /target/etc/skel/.config/autostart/start_videowindow.desktop'
+    # Enable auto power on
+    - 'echo "GRUB_CMDLINE_LINUX_DEFAULT=\"$GRUB_CMDLINE_LINUX_DEFAULT reboot=acpi\" >> /target/etc/default/grub'
+    - 'chroot /target update-grub'
